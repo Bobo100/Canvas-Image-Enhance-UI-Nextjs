@@ -57,7 +57,6 @@ const Canvas = ({ src }: CanvasProps) => {
         // 畫圖 
         drawImageOnCanvas();
 
-
         const handleWheel = (e: WheelEvent) => {
             e.preventDefault();
             const delta = -Math.sign(e.deltaY);
@@ -74,21 +73,6 @@ const Canvas = ({ src }: CanvasProps) => {
         return () => {
             canvas.removeEventListener('wheel', handleWheel);
         }
-
-
-        // 記錄圖片的範圍
-        // const ratio = Math.min(
-        //     canvas.width / (image.width / 2),
-        //     canvas.height / (image.height / 2)
-        // );
-        // const width = `${(ratio * image.width) / 2}px`;
-        // const height = `${(ratio * image.height) / 2}px`;
-        // setImageRange({
-        //     left: canvas.width / 2 - parseInt(width) / 2,
-        //     right: canvas.width / 2 + parseInt(width) / 2,
-        //     top: canvas.height / 2 - parseInt(height) / 2,
-        //     bottom: canvas.height / 2 + parseInt(height) / 2,
-        // });
     }, [image, scaleFactor]);
 
 
