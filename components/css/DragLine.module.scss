@@ -1,0 +1,22 @@
+.line {
+    cursor: ew-resize;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 19px;
+    height: 100%;
+    background-image: linear-gradient(#ffffff, #ffffff);
+    background-size: 3px 100%;
+    background-repeat: no-repeat;
+    // 為了讓滑鼠點擊的時候，滑鼠點擊的位置在線的中間
+    background-position-x: 8px;
+    z-index: 1;
+    touch-action: none;
+    // 這樣才能往左拉
+    margin-left: -8px;
+
+    transition: transform 1s ease-in-out;
+
+    -webkit-user-select: none;
+    user-select: none;
+}
