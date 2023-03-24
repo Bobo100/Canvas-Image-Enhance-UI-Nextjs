@@ -1,18 +1,22 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useReducer, useRef, useState } from 'react';
 import { DragLine } from './DragLine';
 import { Decimal } from "decimal.js"
 import style from './css/Canvas.module.scss'
-import Controlbar from './Controlbar';
+import { ActionType, ZoomValueContext } from './ZoomValue/ZoomValueReducer';
+import ImageRangeProvider, { ImageRangeActionType, ImageRangeContext } from './ImageRange/ImageRangeReducer';
 interface CanvasProps {
     src: string;
 }
+
 const Canvas = ({ src }: CanvasProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [image, setImage] = useState<HTMLImageElement | null>(null);
-    const [scaleFactor, setScaleFactor] = useState(1);
+    const { state, dispatch } = useContext(ZoomValueContext);
     const maxScaleFactor = 2;
     const minScaleFactor = 0.1;
     const [isDragging, setIsDragging] = useState(false);
+
+    const { imageRange, imageRange_Dispatch } = useContext(ImageRangeContext);
 
     useEffect(() => {
         updateCanvasDimensions()
@@ -26,15 +30,13 @@ const Canvas = ({ src }: CanvasProps) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         // 取得瀏覽器的寬度
-        const width = window.innerWidth;
-
-        canvas.width = width;
-        if (width > 768)
+        canvas.width = window.innerWidth;
+        if (window.innerWidth > 768)
             canvas.height = 768
         else
-            canvas.height = width / 1.7;
+            canvas.height = window.innerWidth / 1.7;
 
-        // drawImageOnCanvas();
+        drawImageOnCanvas();
     }
 
     useEffect(() => {
@@ -59,15 +61,41 @@ const Canvas = ({ src }: CanvasProps) => {
         // 畫圖
         drawImageOnCanvas();
 
+        // 畫圖
+        const ratio = Math.min(
+            canvas.width / (image.width / 2),
+            canvas.height / (image.height / 2)
+        );
+        const width = `${(ratio * image.width) / 2}px`;
+        const height = `${(ratio * image.height) / 2}px`;
+
+        const x = (canvas.width - state.zoomValue * parseInt(width)) / 2
+        const y = (canvas.height - state.zoomValue * parseInt(height)) / 2
+        const w = state.zoomValue * parseInt(width)
+        const h = state.zoomValue * parseInt(height)
+
+        // imageRange_Dispatch({
+        //     type: ImageRangeActionType.SET_IMAGE_RANGE,
+        //     payload: {
+        //         x: x,
+        //         y: y,
+        //         width: w,
+        //         height: h
+        //     }
+        // })
+
         const handleWheel = (e: WheelEvent) => {
             e.preventDefault();
             const delta = -Math.sign(e.deltaY);
-            let newScaleFactor = scaleFactor;
-            if ((scaleFactor < maxScaleFactor && delta > 0) || (scaleFactor > minScaleFactor && delta < 0)) {
-                newScaleFactor = new Decimal(scaleFactor).plus(delta * 0.1).toNumber();
+            let newScaleFactor = state.zoomValue;
+            if ((state.zoomValue < maxScaleFactor && delta > 0) || (state.zoomValue > minScaleFactor && delta < 0)) {
+                newScaleFactor = new Decimal(state.zoomValue).plus(delta * 0.1).toNumber();
             }
-            if (newScaleFactor !== scaleFactor) {
-                setScaleFactor(newScaleFactor);
+            if (newScaleFactor !== state.zoomValue) {
+                dispatch({
+                    type: ActionType.SET_ZOOM_VALUE,
+                    payload: newScaleFactor,
+                });
             }
         }
         canvas.addEventListener('wheel', handleWheel);
@@ -77,6 +105,7 @@ const Canvas = ({ src }: CanvasProps) => {
         const handleCanvasMouseMove = (e: MouseEvent) => {
             // 如果滑鼠按下，且在圖片上，就開始拖移
             if (isDragging && e.buttons === 1) {
+                console.log("dragging")
             }
         }
         canvas.addEventListener('mousemove', handleCanvasMouseMove);
@@ -85,7 +114,10 @@ const Canvas = ({ src }: CanvasProps) => {
             canvas.removeEventListener('wheel', handleWheel);
             canvas.removeEventListener('mousemove', handleCanvasMouseMove);
         }
-    }, [image, scaleFactor, isDragging]);
+    }, [image, state.zoomValue, isDragging]);
+
+
+    console.log("r")
 
 
     function drawImageOnCanvas() {
@@ -106,7 +138,7 @@ const Canvas = ({ src }: CanvasProps) => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.scale(scaleFactor, scaleFactor);
+        ctx.scale(state.zoomValue, state.zoomValue);
         ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
         ctx.drawImage(
@@ -120,25 +152,14 @@ const Canvas = ({ src }: CanvasProps) => {
 
 
     function isMouseOverImage(mouseX: number, mouseY: number): boolean {
-        if (!image) return false;
         const canvas = canvasRef.current;
         if (!canvas) return false;
         const ctx = canvas.getContext("2d");
         if (!ctx) return false;
 
-        const ratio = Math.min(
-            canvas.width / (image.width / 2),
-            canvas.height / (image.height / 2)
-        );
-        const width = (ratio * image.width) / 2;
-        const height = (ratio * image.height) / 2;
-        const x = canvas.width / 2 - width / 2;
-        const y = canvas.height / 2 - height / 2;
-
         // 計算圖形路徑
         ctx.beginPath();
-        ctx.rect(x, y, width, height);
-        ctx.closePath();
+        ctx.rect(imageRange.x, imageRange.y, imageRange.width, imageRange.height);
 
         // 判斷滑鼠是否在圖形內
         return ctx.isPointInPath(mouseX, mouseY);
@@ -155,26 +176,20 @@ const Canvas = ({ src }: CanvasProps) => {
     const handleCanvasMouseUp = () => {
         setIsDragging(false);
     };
-
-    const handleZoomChange = (newScaleFactor: number) => {
-        setScaleFactor(newScaleFactor);
-    };
-
     return (
         <>
-            <div className={style.result}>
-                <canvas
-                    id="myCanvas"
-                    className={style.canvas}
-                    ref={canvasRef}
-                    onMouseDown={handleCanvasMouseDown}
-                    onMouseUp={handleCanvasMouseUp}
-                />
-                <DragLine />
-                <div className="absolute">before</div>
-                <div className="absolute">after</div>
-                <Controlbar width={100} height={100} zoomMin={minScaleFactor} zoomMax={maxScaleFactor} zoom={scaleFactor} onZoomChange={handleZoomChange} />
-            </div>
+            <ImageRangeProvider>
+                <div className={style.result}>
+                    <canvas
+                        id="myCanvas"
+                        className={style.canvas}
+                        ref={canvasRef}
+                        onMouseDown={handleCanvasMouseDown}
+                        onMouseUp={handleCanvasMouseUp}
+                    />
+                    <DragLine />
+                </div>
+            </ImageRangeProvider>
         </>
     );
 };

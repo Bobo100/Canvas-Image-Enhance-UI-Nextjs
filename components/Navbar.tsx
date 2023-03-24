@@ -19,7 +19,7 @@ const NavBar = () => {
         // <nav className={`navbar ${visible ? 'navbar--visible' : 'navbar--hidden'}`}>
         <nav className={`${style.navbar} height-100`}>
             <div className="flex align-center">
-                <Image className={style.logo} src="/images/YCE_Black_Logo.svg" alt="logo" width={100} height={100} />
+                <Image className={style.logo} src="/images/YCE_Black_Logo.svg" alt="logo" width={100} height={100} priority/>
             </div>
             <div className={`flex align-center ${style.navbar_container}`}>
                 <div className={style.faq_text}>FAQ</div>
