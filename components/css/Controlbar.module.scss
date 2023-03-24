@@ -29,6 +29,7 @@
 
 .icon {
     @extend %icon;
+    cursor: pointer;
 }
 
 .upload_btn {
@@ -47,4 +48,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.window_size_percent {
+    margin: 0 20px;
 }

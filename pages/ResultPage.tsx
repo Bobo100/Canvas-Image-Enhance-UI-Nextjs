@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import Canvas from "../components/Canvas";
-import Controlbar from "../components/Controlbar";
 import NavBar from "../components/Navbar";
 
 import style from './css/ResultPage.module.scss'
@@ -22,8 +21,7 @@ const ResultPage = () => {
         <div className="flex">
             <div className={`${style.ResultPage} flex flex-column align-center`}>
                 <NavBar />
-                {imageData ? <Canvas src={imageData as string} /> : <div className="no-image">請先選擇圖片</div>}
-                <Controlbar width={100} height={100} zoom={100} onZoomChange={() => { }} />
+                {imageData ? <Canvas src={imageData as string} /> : <div className="no-image">請先選擇圖片</div>}              
             </div>
         </div>
     );

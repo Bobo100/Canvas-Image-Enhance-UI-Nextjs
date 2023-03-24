@@ -20,3 +20,21 @@
     -webkit-user-select: none;
     user-select: none;
 }
+
+.drag_icon_container {
+    padding: 44px;
+    bottom: 10%;
+    left: -34.5px;
+}
+
+.drag_icon {
+    /* pointer-events: none 是一個CSS屬性，
+    可用於元素上，它告訴瀏覽器讓該元素忽略所有滑鼠或指標事件（例如按下、移動等），
+    即使將滑鼠移動到該元素之上，它也不會收到任何滑鼠或觸控事件。
+    這對於防止使用者與某些元素互動是很有用的，例如圖像遮罩或按鈕使用期間禁用它們。
+    但是在你的情境中可能不適用，因為你需要使用者拖動該元素。
+    你可以嘗試把 pointer-events 設為 auto 或刪除這行 CSS 屬性。 */
+    pointer-events: none;
+    // translatex
+    translate: -50% -50% 0;
+}

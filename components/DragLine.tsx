@@ -1,4 +1,5 @@
 // 可以拖移的線，請一定要搭配 css/DragLine.scss 使用
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import style from "./css/DragLine.module.scss";
 export const DragLine = () => {
@@ -12,7 +13,7 @@ export const DragLine = () => {
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
-            if (isDragging) {
+            if (isDragging && e.buttons === 1) {
                 const lineWidth = lineRef.current?.offsetWidth || 0;
                 const deltaX = e.clientX - lineWidth / 2;
 
@@ -67,7 +68,53 @@ export const DragLine = () => {
             lineRef.current.style.transition = 'none'; // 移除 transition 效果
         }
     };
-   
+
+
+
+    /* Touch Event */
+    useEffect(() => {
+        const handleTouchMove = (e: TouchEvent) => {
+            if (isDragging) {
+                const lineWidth = lineRef.current?.offsetWidth || 0;
+                const touches = e.touches[0];
+                const deltaX = touches.clientX - lineWidth / 2;
+
+                // 如果超過左邊界，就不動
+                if (deltaX < 0) {
+                    return;
+                }
+                // 如果超過右邊界，就不動
+                if (deltaX > window.innerWidth - 1) {
+                    return;
+                }
+
+                requestAnimationFrame(() => {
+                    const newTransform = `translate3d(${deltaX}px, 0, 0)`;
+                    setTransform(newTransform);
+                });
+
+            }
+        };
+
+        const handleTouchEnd = () => {
+            setIsDragging(false);
+        };
+
+        document.addEventListener("touchmove", handleTouchMove);
+        document.addEventListener("touchend", handleTouchEnd);
+
+        return () => {
+            document.removeEventListener("touchmove", handleTouchMove);
+            document.removeEventListener("touchend", handleTouchEnd);
+        };
+    }, [isDragging]);
+
+    const handleLineTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+        setIsDragging(true);
+        if (lineRef.current) {
+            lineRef.current.style.transition = 'none'; // 移除 transition 效果
+        }
+    };
 
     return (
         <div
@@ -75,6 +122,11 @@ export const DragLine = () => {
             ref={lineRef}
             style={{ transform }}
             onMouseDown={handleLineMouseDown}
-        ></div>
+            onTouchStart={handleLineTouchStart}
+        >
+            <div className={`absolute height-0 width-0 ${style.drag_icon_container}`}>
+                <Image className={style.drag_icon} src="/images/icon_AB.png" width={50} height={58} alt='' />
+            </div>
+        </div>
     );
 };

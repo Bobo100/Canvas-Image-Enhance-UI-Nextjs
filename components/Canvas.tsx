@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { DragLine } from './DragLine';
 import { Decimal } from "decimal.js"
 import style from './css/Canvas.module.scss'
+import Controlbar from './Controlbar';
 interface CanvasProps {
     src: string;
 }
@@ -9,8 +10,9 @@ const Canvas = ({ src }: CanvasProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [image, setImage] = useState<HTMLImageElement | null>(null);
     const [scaleFactor, setScaleFactor] = useState(1);
-    const maxScaleFactor = 3;
+    const maxScaleFactor = 2;
     const minScaleFactor = 0.1;
+    const [isDragging, setIsDragging] = useState(false);
 
     useEffect(() => {
         updateCanvasDimensions()
@@ -20,20 +22,20 @@ const Canvas = ({ src }: CanvasProps) => {
         };
     }, [updateCanvasDimensions]);
 
-
     function updateCanvasDimensions() {
         const canvas = canvasRef.current;
+        if (!canvas) return;
         // 取得瀏覽器的寬度
         const width = window.innerWidth;
+
         canvas.width = width;
         if (width > 768)
             canvas.height = 768
         else
             canvas.height = width / 1.7;
 
-        drawImageOnCanvas();
+        // drawImageOnCanvas();
     }
-
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -54,7 +56,7 @@ const Canvas = ({ src }: CanvasProps) => {
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
-        // 畫圖 
+        // 畫圖
         drawImageOnCanvas();
 
         const handleWheel = (e: WheelEvent) => {
@@ -70,10 +72,20 @@ const Canvas = ({ src }: CanvasProps) => {
         }
         canvas.addEventListener('wheel', handleWheel);
 
+
+        // 拖移事件 透過button來判斷是否要拖移
+        const handleCanvasMouseMove = (e: MouseEvent) => {
+            // 如果滑鼠按下，且在圖片上，就開始拖移
+            if (isDragging && e.buttons === 1) {
+            }
+        }
+        canvas.addEventListener('mousemove', handleCanvasMouseMove);
+
         return () => {
             canvas.removeEventListener('wheel', handleWheel);
+            canvas.removeEventListener('mousemove', handleCanvasMouseMove);
         }
-    }, [image, scaleFactor]);
+    }, [image, scaleFactor, isDragging]);
 
 
     function drawImageOnCanvas() {
@@ -95,7 +107,6 @@ const Canvas = ({ src }: CanvasProps) => {
 
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.scale(scaleFactor, scaleFactor);
-        console.log(scaleFactor)
         ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
         ctx.drawImage(
@@ -108,125 +119,63 @@ const Canvas = ({ src }: CanvasProps) => {
     }
 
 
-    // drag Canvas
-    const [isDragging, setIsDragging] = useState(false);
-    const [imageRange, setImageRange] = useState({ left: 0, right: 0, top: 0, bottom: 0 });
-    // 紀錄最後一次的滑鼠座標 目的是為了計算滑鼠移動的距離
-    const [lastMousePosition, setLastMousePosition] = useState({ x: 0, y: 0 });
-    // 確認是第一次拖移
-    const [firstDrag, setFirstDrag] = useState(true);
+    function isMouseOverImage(mouseX: number, mouseY: number): boolean {
+        if (!image) return false;
+        const canvas = canvasRef.current;
+        if (!canvas) return false;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return false;
 
-    // useEffect(() => {
-    //     const handleMouseMove = (e: MouseEvent) => {
-    //         const canvas = canvasRef.current;
-    //         if (!canvas) return;
-    //         const ctx = canvas.getContext("2d");
-    //         if (!ctx) return;
+        const ratio = Math.min(
+            canvas.width / (image.width / 2),
+            canvas.height / (image.height / 2)
+        );
+        const width = (ratio * image.width) / 2;
+        const height = (ratio * image.height) / 2;
+        const x = canvas.width / 2 - width / 2;
+        const y = canvas.height / 2 - height / 2;
 
-    //         if (isDragging && image) {
-    //             // 滑鼠不能超過視窗範圍
-    //             if (e.clientX < 0 || e.clientX > window.innerWidth - 1 || e.clientY < 0 || e.clientY > window.innerHeight - 1) {
-    //                 return;
-    //             }
-    //             const canvasRect = canvas.getBoundingClientRect();
-    //             // console.log(canvasX, canvasY);
-    //             // 滑鼠在 canvas 上的座標
-    //             const mouseCanvasX = ((e.clientX - canvasRect.left) / canvasRect.width) * canvas.width;
-    //             const mouseCanvasY = ((e.clientY - canvasRect.top) / canvasRect.height) * canvas.height;
+        // 計算圖形路徑
+        ctx.beginPath();
+        ctx.rect(x, y, width, height);
+        ctx.closePath();
 
-    //             // 如果在圖片範圍內，才動
-    //             if (mouseCanvasX > imageRange.left && mouseCanvasX < imageRange.right && mouseCanvasY > imageRange.top && mouseCanvasY < imageRange.bottom) {
-    //                 // 滑鼠移動的距離
-    //                 let deltaX = mouseCanvasX - lastMousePosition.x;
-    //                 let deltaY = mouseCanvasY - lastMousePosition.y;
-
-    //                 // 第一次拖移
-    //                 if (firstDrag) {
-    //                     deltaX = 0;
-    //                     deltaY = 0;
-    //                     setLastMousePosition({ x: mouseCanvasX, y: mouseCanvasY });
-    //                     setFirstDrag(false);
-    //                 }
-
-    //                 requestAnimationFrame(() => {
-    //                     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    //                     // 圖片左上角的座標 + 滑鼠移動的距離
-    //                     ctx.drawImage(image, imageRange.left, imageRange.top, imageRange.right - imageRange.left, imageRange.bottom - imageRange.top);
-    //                 });
-
-    //                 // 如果 圖片左上角的座標 + 滑鼠移動的距離 < 0 就把滑鼠移動的距離設為 0
-    //                 if (imageRange.left + deltaX < 0) {
-    //                     deltaX = -imageRange.left;
-    //                 }
-    //                 if (imageRange.top + deltaY < 0) {
-    //                     deltaY = -imageRange.top;
-    //                 }
-    //                 // 如果 圖片右下角的座標 + 滑鼠移動的距離 > canvas 範圍 就把滑鼠移動的距離設為 canvas 範圍 - 圖片右下角的座標
-    //                 // 但說穿了就是圖片不能超過 canvas 範圍
-    //                 // 也可以說deltaX 會等於0 
-    //                 if (imageRange.right + deltaX > canvas.width) {
-    //                     deltaX = 0;
-    //                 }
-    //                 if (imageRange.bottom + deltaY > canvas.height) {
-    //                     deltaY = 0;
-    //                 }
-
-    //                 setImageRange({
-    //                     left: imageRange.left + deltaX,
-    //                     right: imageRange.right + deltaX,
-    //                     top: imageRange.top + deltaY,
-    //                     bottom: imageRange.bottom + deltaY,
-    //                 });
-    //                 setLastMousePosition({ x: mouseCanvasX, y: mouseCanvasY });
-    //             }
-    //         }
-    //     };
-
-    //     const handleMouseUp = () => {
-    //         setIsDragging(false);
-    //         // 重置
-    //         setFirstDrag(true);
-    //     };
-
-    //     // 如果滑鼠移出視窗，就停止拖移
-    //     const handleMouseLeave = () => {
-    //         setIsDragging(false);
-    //         // 重置
-    //         setFirstDrag(true);
-    //     };
-
-    //     document.addEventListener("mousemove", handleMouseMove);
-    //     document.addEventListener("mouseup", handleMouseUp);
-    //     document.addEventListener("mouseleave", handleMouseLeave);
-
-    //     return () => {
-
-    //         document.removeEventListener("mousemove", handleMouseMove);
-    //         document.removeEventListener("mouseup", handleMouseUp);
-    //         document.removeEventListener("mouseleave", handleMouseLeave);
-    //     };
-    // }, [firstDrag, image, imageRange, isDragging, lastMousePosition.x, lastMousePosition.y]);
+        // 判斷滑鼠是否在圖形內
+        return ctx.isPointInPath(mouseX, mouseY);
+    }
 
 
     // 當滑鼠在 線 上按下時，就開始拖移
     const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        // setIsDragging(true);
-        // 重製
-        // setFirstDrag(true);
-        console.log("---------------------------------------------")
+        if (isMouseOverImage(e.clientX, e.clientY)) {
+            setIsDragging(true);
+        }
     };
 
+    const handleCanvasMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    const handleZoomChange = (newScaleFactor: number) => {
+        setScaleFactor(newScaleFactor);
+    };
 
     return (
-        <div className={style.result}>
-            <canvas
-                className={style.canvas}
-                ref={canvasRef}
-                onMouseDown={handleCanvasMouseDown}
-
-            />
-            <DragLine />
-        </div>
+        <>
+            <div className={style.result}>
+                <canvas
+                    id="myCanvas"
+                    className={style.canvas}
+                    ref={canvasRef}
+                    onMouseDown={handleCanvasMouseDown}
+                    onMouseUp={handleCanvasMouseUp}
+                />
+                <DragLine />
+                <div className="absolute">before</div>
+                <div className="absolute">after</div>
+                <Controlbar width={100} height={100} zoomMin={minScaleFactor} zoomMax={maxScaleFactor} zoom={scaleFactor} onZoomChange={handleZoomChange} />
+            </div>
+        </>
     );
 };
 
