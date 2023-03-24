@@ -105,8 +105,6 @@ const Canvas = ({ src }: CanvasProps) => {
             parseInt(width),
             parseInt(height)
         );
-
-
     }
 
 

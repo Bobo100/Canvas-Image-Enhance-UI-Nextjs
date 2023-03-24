@@ -98,3 +98,31 @@
     align-items: center;
     position: relative;
 }
+
+@media screen and (max-width: 1180px) {
+    %icon_font_none_size {
+        padding: 10px;
+        width: 44px;
+        height: 44px;
+    }
+    .icon_font_none_size {
+        @extend %icon_font_none_size;
+    }
+
+    .font_display_none {
+        display: none;
+    }
+
+    .icon {
+        margin: 0;
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    .faq_text,
+    .free_trail_btn,
+    .login_btn,
+    .langugae_btn {
+        display: none;
+    }
+}
