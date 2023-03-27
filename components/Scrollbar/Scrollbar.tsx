@@ -1,5 +1,5 @@
 import { useContext, useReducer } from "react";
-import { reducer, initialState, ActionType, ZoomValueContext } from "./ZoomValue/ZoomValueReducer";
+import { reducer, initialState, ActionType, ZoomValueContext } from "../ZoomValue/ZoomValueReducer";
 
 // Scrollbar
 interface ScrollbarProps {

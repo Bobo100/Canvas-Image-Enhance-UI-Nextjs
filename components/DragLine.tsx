@@ -1,7 +1,7 @@
 // 可以拖移的線，請一定要搭配 css/DragLine.scss 使用
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import style from "./css/DragLine.module.scss";
+import style from "./scss/DragLine.module.scss";
 export const DragLine = () => {
     const lineRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);

@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import Canvas from "../components/Canvas";
 import Controlbar from "../components/Controlbar";
+import ImageList from "../components/ImageList/ImageList";
 import NavBar from "../components/Navbar";
 import ZoomProvider, { ZoomValueContext } from "../components/ZoomValue/ZoomValueReducer";
 
@@ -28,15 +29,16 @@ const ResultPage = () => {
 
     return (
         <ZoomProvider>
-                <div className="flex">
-                    <div className={`${style.ResultPage} flex flex-column align-center`}>
-                        <NavBar />
-                        {imageData ? <Canvas src={imageData as string} /> : <div className="no-image">請先選擇圖片</div>}
-                        <div className="absolute">before</div>
-                        <div className="absolute">after</div>
-                        <Controlbar width={getImageSize.width} height={getImageSize.height} zoomMin={0.1} zoomMax={2} />
-                    </div>
+            <div className="flex">
+                <div className={`${style.ResultPage} flex flex-column align-center`}>
+                    <NavBar />
+                    {imageData ? <Canvas src={imageData as string} /> : <div className="no-image">請先選擇圖片</div>}
+                    <div className="absolute">before</div>
+                    <div className="absolute">after</div>
+                    <Controlbar width={getImageSize.width} height={getImageSize.height} zoomMin={0.1} zoomMax={2} />
+                    <ImageList />
                 </div>
+            </div>
         </ZoomProvider>
     );
 };

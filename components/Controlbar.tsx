@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { useContext, useReducer } from 'react';
-import style from './css/Controlbar.module.scss'
-import Scrollbar from './Scrollbar';
+import style from './scss/Controlbar.module.scss'
+import Scrollbar from './Scrollbar/Scrollbar';
 import { reducer, initialState, ActionType, ZoomValueContext } from './ZoomValue/ZoomValueReducer';
 
 interface ControlbarProps {

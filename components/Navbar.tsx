@@ -1,5 +1,5 @@
 import Image from "next/image"
-import style from './css/Navbar.module.scss'
+import style from './scss/Navbar.module.scss'
 const NavBar = () => {
 
     // canvas.tsx
