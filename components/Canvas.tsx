@@ -8,10 +8,9 @@ import ImageRangeProvider, { ImageRangeActionType, ImageRangeContext } from './I
 interface CanvasProps {
     src: string;
 }
-
 const Canvas = ({ src }: CanvasProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [image, setImage] = useState<HTMLImageElement | null>(null);
+    const [image, setImage] = useState<HTMLImageElement>();
     const { state, dispatch } = useContext(ZoomValueContext);
     const maxScaleFactor = 2;
     const minScaleFactor = 0.1;
@@ -24,7 +23,13 @@ const Canvas = ({ src }: CanvasProps) => {
     const [isDraggable, setIsDraggable] = useState(false);
     const [image2, setImage2] = useState<HTMLImageElement>();
     const [startCoords, setStartCoords] = useState({ x: 0, y: 0 });
-    const [dragImageRangeList, setDragImageRangeList] = useState<{ image: HTMLImageElement, x: number, y: number, width: number, height: number }[]>([]);
+    // const [dragImageRangeList, setDragImageRangeList] = useState<{ image: HTMLImageElement, x: number, y: number, width: number, height: number }[]>([]);
+    const dragImageRangeListRef = useRef<{ image: HTMLImageElement, x: number, y: number, width: number, height: number }[]>([]);
+
+
+    useEffect(() => {
+        console.log("render");
+    })
 
 
     useEffect(() => {
@@ -158,8 +163,19 @@ const Canvas = ({ src }: CanvasProps) => {
         // 要想想 這邊要怎麼處理
         if (image2) {
             ctx.restore();
-            for (let i = 0; i < dragImageRangeList.length; i++) {
-                const item = dragImageRangeList[i];
+            // for (let i = 0; i < dragImageRangeList.length; i++) {
+            //     const item = dragImageRangeList[i];
+            //     ctx.drawImage(
+            //         item.image,
+            //         item.x,
+            //         item.y,
+            //         item.width,
+            //         item.height
+            //     );
+            // }
+
+            for (let i = 0; i < dragImageRangeListRef.current.length; i++) {
+                const item = dragImageRangeListRef.current[i];
                 ctx.drawImage(
                     item.image,
                     item.x,
@@ -215,9 +231,8 @@ const Canvas = ({ src }: CanvasProps) => {
         const width = image2.width;
         const height = image2.height;
 
-        // const context = canvasRef.current!.getContext("2d");
-        // context!.drawImage(image2, x, y, width, height);
-        setDragImageRangeList([...dragImageRangeList, { image: image2, x: x, y: y, width: width, height: height }])
+        // setDragImageRangeList([...dragImageRangeList, { image: image2, x: x, y: y, width: width, height: height }])
+        dragImageRangeListRef.current.push({ image: image2, x: x, y: y, width: width, height: height });
     }
 
 
@@ -232,22 +247,7 @@ const Canvas = ({ src }: CanvasProps) => {
 
     function handleDragEnd(event: React.DragEvent<HTMLImageElement>) {
         setIsDraggable(false);
-        // setImage2(image2.filter((image) => image !== event.currentTarget))
     }
-
-    // useEffect(() => {
-    //     if (!canvasRef.current || !image2 || !isDraggable) return;
-
-    //     const context = canvasRef.current.getContext("2d");
-    //     const { x, y } = startCoords;
-    //     const width = image2[0].width;
-    //     const height = image2[0].height;
-
-    //     context?.drawImage(image2[0], x, y, width, height);
-    // }, [isDraggable]);
-
-    console.log("render")
-
 
 
     return (
@@ -265,6 +265,11 @@ const Canvas = ({ src }: CanvasProps) => {
                     />
                     <DragLine />
                     <NextImage src="/images/imagelist/01.jpg" width={50} height={50} alt=""
+                        draggable
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                    />
+                    <NextImage src="/images/imagelist/02.jpg" width={50} height={50} alt=""
                         draggable
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
