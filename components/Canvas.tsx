@@ -23,14 +23,12 @@ const Canvas = ({ src }: CanvasProps) => {
     const [isDraggable, setIsDraggable] = useState(false);
     const [image2, setImage2] = useState<HTMLImageElement>();
     const [startCoords, setStartCoords] = useState({ x: 0, y: 0 });
-    // const [dragImageRangeList, setDragImageRangeList] = useState<{ image: HTMLImageElement, x: number, y: number, width: number, height: number }[]>([]);
     const dragImageRangeListRef = useRef<{ image: HTMLImageElement, x: number, y: number, width: number, height: number }[]>([]);
-
+    const [dragImageRangeList, setDragImageRangeList] = useState<{ image: HTMLImageElement, x: number, y: number, width: number, height: number }[]>([]);
 
     useEffect(() => {
         console.log("render");
     })
-
 
     useEffect(() => {
         updateCanvasDimensions()
@@ -161,21 +159,10 @@ const Canvas = ({ src }: CanvasProps) => {
         );
 
         // 要想想 這邊要怎麼處理
-        if (image2) {
+        if (dragImageRangeList) {
             ctx.restore();
-            // for (let i = 0; i < dragImageRangeList.length; i++) {
-            //     const item = dragImageRangeList[i];
-            //     ctx.drawImage(
-            //         item.image,
-            //         item.x,
-            //         item.y,
-            //         item.width,
-            //         item.height
-            //     );
-            // }
-
-            for (let i = 0; i < dragImageRangeListRef.current.length; i++) {
-                const item = dragImageRangeListRef.current[i];
+            for (let i = 0; i < dragImageRangeList.length; i++) {
+                const item = dragImageRangeList[i];
                 ctx.drawImage(
                     item.image,
                     item.x,
@@ -183,8 +170,22 @@ const Canvas = ({ src }: CanvasProps) => {
                     item.width,
                     item.height
                 );
-            }
+            }            
         }
+
+        // if (dragImageRangeListRef.current) {
+        //     ctx.restore();
+        //     for (let i = 0; i < dragImageRangeListRef.current.length; i++) {
+        //         const item = dragImageRangeListRef.current[i];
+        //         ctx.drawImage(
+        //             item.image,
+        //             item.x,
+        //             item.y,
+        //             item.width,
+        //             item.height
+        //         );
+        //     }
+        // }
 
     }
 
@@ -231,8 +232,8 @@ const Canvas = ({ src }: CanvasProps) => {
         const width = image2.width;
         const height = image2.height;
 
-        // setDragImageRangeList([...dragImageRangeList, { image: image2, x: x, y: y, width: width, height: height }])
-        dragImageRangeListRef.current.push({ image: image2, x: x, y: y, width: width, height: height });
+        setDragImageRangeList([...dragImageRangeList, { image: image2, x: x, y: y, width: width, height: height }])
+        // dragImageRangeListRef.current.push({ image: image2, x: x, y: y, width: width, height: height });
     }
 
 
@@ -240,13 +241,13 @@ const Canvas = ({ src }: CanvasProps) => {
     function handleDragStart(event: React.DragEvent<HTMLImageElement>) {
         const startX = event.clientX - event.currentTarget.offsetLeft;
         const startY = event.clientY - event.currentTarget.offsetTop;
-        setIsDraggable(true);
+        // setIsDraggable(true);
         setStartCoords({ x: startX, y: startY });
         setImage2(event.currentTarget);
     }
 
     function handleDragEnd(event: React.DragEvent<HTMLImageElement>) {
-        setIsDraggable(false);
+        // setIsDraggable(false);
     }
 
 
