@@ -1,29 +1,24 @@
-import { useContext, useEffect, useReducer, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useReducer, useRef, useState } from 'react';
 import { DragLine } from './DragLine';
 import { Decimal } from "decimal.js"
 import NextImage from 'next/image';
 import style from './scss/Canvas.module.scss'
-import { ActionType, ZoomValueContext } from './ZoomValue/ZoomValueReducer';
-import ImageRangeProvider, { ImageRangeActionType, ImageRangeContext } from './ImageRange/ImageRangeReducer';
+import { ActionType, ImageRangeActionType, ImageValue } from './ContextAndReducer/ContextAndReducer';
 interface CanvasProps {
     src: string;
 }
 const Canvas = ({ src }: CanvasProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [image, setImage] = useState<HTMLImageElement>();
-    const { state, dispatch } = useContext(ZoomValueContext);
+    const { state, dispatch } = useContext(ImageValue);
     const maxScaleFactor = 2;
     const minScaleFactor = 0.1;
     const [isDragging, setIsDragging] = useState(false);
 
-    const { imageRange, imageRange_Dispatch } = useContext(ImageRangeContext);
-
 
     // draggable
-    const [isDraggable, setIsDraggable] = useState(false);
     const [image2, setImage2] = useState<HTMLImageElement>();
     const [startCoords, setStartCoords] = useState({ x: 0, y: 0 });
-    const dragImageRangeListRef = useRef<{ image: HTMLImageElement, x: number, y: number, width: number, height: number }[]>([]);
     const [dragImageRangeList, setDragImageRangeList] = useState<{ image: HTMLImageElement, x: number, y: number, width: number, height: number }[]>([]);
 
     useEffect(() => {
@@ -63,15 +58,69 @@ const Canvas = ({ src }: CanvasProps) => {
         };
     }, [src]);
 
+    const [imageRange, setImageRange] = useState({
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0
+    });
 
+    const handleWheel = useCallback((e: WheelEvent) => {
+        if (!image) return;
+        e.preventDefault();
+        const delta = -Math.sign(e.deltaY);
+        let newScaleFactor = state.zoomValue;
+        if ((state.zoomValue < maxScaleFactor && delta > 0) || (state.zoomValue > minScaleFactor && delta < 0)) {
+            newScaleFactor = new Decimal(state.zoomValue).plus(delta * 0.1).toNumber();
+        }
+        if (newScaleFactor !== state.zoomValue) {
+            dispatch({
+                type: ActionType.SET_ZOOM_VALUE,
+                payload: newScaleFactor,
+            });
+
+            // 計算圖片的範圍
+            ImageRange();
+        }
+    }, [image, state.zoomValue]);
+
+    canvasRef.current?.addEventListener('wheel', handleWheel);
+
+
+    //  拖移事件 透過button來判斷是否要拖移
+    useEffect(() => {
+        const handleCanvasMouseMove = (e: MouseEvent) => {
+            // 如果滑鼠按下，且在圖片上，就開始拖移
+            if (isDragging && e.buttons === 1) {
+                console.log("move")
+            }
+        }
+        canvasRef.current?.addEventListener('mousemove', handleCanvasMouseMove);
+        return () => {
+            canvasRef.current?.removeEventListener('mousemove', handleCanvasMouseMove);
+        };
+    }, [isDragging]);
+
+    // 用圖片範圍來判斷 是否要重新繪製圖片 (因為我們所有動作結束都必須要更新圖片範圍)
     useEffect(() => {
         if (!image) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
+
         // 畫圖
         drawImageOnCanvas();
+    }, [imageRange]);
+
+
+    // 計算圖片範圍
+    function ImageRange() {
+        if (!image) return;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
 
         // 畫圖
         const ratio = Math.min(
@@ -80,53 +129,19 @@ const Canvas = ({ src }: CanvasProps) => {
         );
         const width = `${(ratio * image.width) / 2}px`;
         const height = `${(ratio * image.height) / 2}px`;
+        const x = (canvas.width - state.zoomValue * parseInt(width)) / 2;
+        const y = (canvas.height - state.zoomValue * parseInt(height)) / 2;
+        const w = state.zoomValue * parseInt(width);
+        const h = state.zoomValue * parseInt(height);
 
-        const x = (canvas.width - state.zoomValue * parseInt(width)) / 2
-        const y = (canvas.height - state.zoomValue * parseInt(height)) / 2
-        const w = state.zoomValue * parseInt(width)
-        const h = state.zoomValue * parseInt(height)
-
-        // imageRange_Dispatch({
-        //     type: ImageRangeActionType.SET_IMAGE_RANGE,
-        //     payload: {
-        //         x: x,
-        //         y: y,
-        //         width: w,
-        //         height: h
-        //     }
-        // })
-
-        const handleWheel = (e: WheelEvent) => {
-            e.preventDefault();
-            const delta = -Math.sign(e.deltaY);
-            let newScaleFactor = state.zoomValue;
-            if ((state.zoomValue < maxScaleFactor && delta > 0) || (state.zoomValue > minScaleFactor && delta < 0)) {
-                newScaleFactor = new Decimal(state.zoomValue).plus(delta * 0.1).toNumber();
-            }
-            if (newScaleFactor !== state.zoomValue) {
-                dispatch({
-                    type: ActionType.SET_ZOOM_VALUE,
-                    payload: newScaleFactor,
-                });
-            }
-        }
-        canvas.addEventListener('wheel', handleWheel);
-
-
-        // 拖移事件 透過button來判斷是否要拖移
-        const handleCanvasMouseMove = (e: MouseEvent) => {
-            // 如果滑鼠按下，且在圖片上，就開始拖移
-            if (isDragging && e.buttons === 1) {
-                console.log("dragging")
-            }
-        }
-        canvas.addEventListener('mousemove', handleCanvasMouseMove);
-
-        return () => {
-            canvas.removeEventListener('wheel', handleWheel);
-            canvas.removeEventListener('mousemove', handleCanvasMouseMove);
-        }
-    }, [image, state.zoomValue, isDragging]);
+        // 設置圖片範圍
+        setImageRange({
+            x: x,
+            y: y,
+            width: w,
+            height: h
+        });
+    }
 
 
     function drawImageOnCanvas() {
@@ -170,23 +185,8 @@ const Canvas = ({ src }: CanvasProps) => {
                     item.width,
                     item.height
                 );
-            }            
+            }
         }
-
-        // if (dragImageRangeListRef.current) {
-        //     ctx.restore();
-        //     for (let i = 0; i < dragImageRangeListRef.current.length; i++) {
-        //         const item = dragImageRangeListRef.current[i];
-        //         ctx.drawImage(
-        //             item.image,
-        //             item.x,
-        //             item.y,
-        //             item.width,
-        //             item.height
-        //         );
-        //     }
-        // }
-
     }
 
 
@@ -252,32 +252,29 @@ const Canvas = ({ src }: CanvasProps) => {
 
 
     return (
-        <>
-            <ImageRangeProvider>
-                <div className={style.result}>
-                    <canvas
-                        id="myCanvas"
-                        className={style.canvas}
-                        ref={canvasRef}
-                        onMouseDown={handleCanvasMouseDown}
-                        onMouseUp={handleCanvasMouseUp}
-                        onDragOver={handleDragOver}
-                        onDrop={handleDrop}
-                    />
-                    <DragLine />
-                    <NextImage src="/images/imagelist/01.jpg" width={50} height={50} alt=""
-                        draggable
-                        onDragStart={handleDragStart}
-                        onDragEnd={handleDragEnd}
-                    />
-                    <NextImage src="/images/imagelist/02.jpg" width={50} height={50} alt=""
-                        draggable
-                        onDragStart={handleDragStart}
-                        onDragEnd={handleDragEnd}
-                    />
-                </div>
-            </ImageRangeProvider>
-        </>
+        <div className={style.result}>
+            <canvas
+                id="myCanvas"
+                className={style.canvas}
+                ref={canvasRef}
+                onMouseDown={handleCanvasMouseDown}
+                onMouseUp={handleCanvasMouseUp}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+
+            />
+            <DragLine />
+            <NextImage src="/images/imagelist/01.jpg" width={50} height={50} alt=""
+                draggable
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+            />
+            <NextImage src="/images/imagelist/02.jpg" width={50} height={50} alt=""
+                draggable
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+            />
+        </div>
     );
 };
 

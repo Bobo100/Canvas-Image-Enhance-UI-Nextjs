@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { useContext, useReducer } from 'react';
 import style from './scss/Controlbar.module.scss'
 import Scrollbar from './Scrollbar/Scrollbar';
-import { reducer, initialState, ActionType, ZoomValueContext } from './ZoomValue/ZoomValueReducer';
+import { ActionType, ImageValue } from './ContextAndReducer/ContextAndReducer';
 
 interface ControlbarProps {
     width: number;
@@ -12,7 +12,7 @@ interface ControlbarProps {
 }
 const Controlbar = ({ width, height, zoomMin, zoomMax }: ControlbarProps) => {
 
-    const { state, dispatch } = useContext(ZoomValueContext);
+    const { state, dispatch } = useContext(ImageValue);
 
     const handleMinusClick = () => {
         dispatch({

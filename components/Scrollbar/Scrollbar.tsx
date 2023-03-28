@@ -1,5 +1,5 @@
 import { useContext, useReducer } from "react";
-import { reducer, initialState, ActionType, ZoomValueContext } from "../ZoomValue/ZoomValueReducer";
+import { ActionType, ImageValue } from "../ContextAndReducer/ContextAndReducer";
 
 // Scrollbar
 interface ScrollbarProps {
@@ -11,7 +11,7 @@ interface ScrollbarProps {
 
 const Scrollbar: React.FC<ScrollbarProps> = ({ className, min, max, step }) => {
 
-    const { state, dispatch } = useContext(ZoomValueContext);
+    const { state, dispatch } = useContext(ImageValue);
 
     const handleScroll = (e: React.ChangeEvent<HTMLInputElement>) => {
         dispatch({

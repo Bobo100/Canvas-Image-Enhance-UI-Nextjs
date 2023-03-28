@@ -1,9 +1,9 @@
 import { useContext, useEffect, useState } from "react";
 import Canvas from "../components/Canvas";
+import ImageValueProvider from "../components/ContextAndReducer/ContextAndReducer";
 import Controlbar from "../components/Controlbar";
 import ImageList from "../components/ImageList/ImageList";
 import NavBar from "../components/Navbar";
-import ZoomProvider, { ZoomValueContext } from "../components/ZoomValue/ZoomValueReducer";
 
 import style from './css/ResultPage.module.scss'
 
@@ -28,7 +28,7 @@ const ResultPage = () => {
     }, []);
 
     return (
-        <ZoomProvider>
+        <ImageValueProvider>
             <div className="flex">
                 <div className={`${style.ResultPage} flex flex-column align-center`}>
                     <NavBar />
@@ -39,7 +39,7 @@ const ResultPage = () => {
                     <ImageList />
                 </div>
             </div>
-        </ZoomProvider>
+        </ImageValueProvider>
     );
 };
 

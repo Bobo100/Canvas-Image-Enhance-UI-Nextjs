@@ -1,5 +1,37 @@
 import { createContext, useReducer } from "react";
 
+export type State = {
+    zoomValue: number;
+};
+
+export const initialState = {
+    zoomValue: 1,
+};
+
+export enum ActionType {
+    SET_ZOOM_VALUE = 'SET_ZOOM_VALUE',
+}
+
+export type Action = {
+    type: ActionType;
+    payload: number;
+}
+
+export const reducer = (state: State, action: Action) => {
+    switch (action.type) {
+        case ActionType.SET_ZOOM_VALUE:
+            return {
+                ...state,
+                zoomValue: action.payload,
+            };
+        default:
+            return state;
+    }
+}
+
+
+
+///
 export type ImageRangeState = {
     x: number;
     y: number;
@@ -41,18 +73,21 @@ interface IProps {
 }
 
 // 定義一個 Context
-export const ImageRangeContext = createContext({
+export const ImageValue = createContext({
+    state: initialState,
+    dispatch: (action: Action) => { },
     imageRange: imageRangeInitialState,
     imageRange_Dispatch: (action: ImageAction) => { },
 })
 
-const ImageRangeProvider = ({ children }: IProps) => {
+const ImageValueProvider = ({ children }: IProps) => {
+    const [state, dispatch] = useReducer(reducer, initialState);
     const [imageRange, imageRange_Dispatch] = useReducer(imageRange_reducer, imageRangeInitialState);
     return (
-        <ImageRangeContext.Provider value={{ imageRange, imageRange_Dispatch }}>
+        <ImageValue.Provider value={{ state, dispatch, imageRange, imageRange_Dispatch }}>
             {children}
-        </ImageRangeContext.Provider>
+        </ImageValue.Provider>
     )
 }
 
-export default ImageRangeProvider;
+export default ImageValueProvider;
